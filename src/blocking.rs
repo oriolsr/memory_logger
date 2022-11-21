@@ -12,7 +12,7 @@ use regex::Regex;
 
 
 #[derive(Debug)]
-struct Logger {
+pub struct Logger {
 	level: Level,
 
 	#[cfg(feature = "target")]
@@ -94,7 +94,7 @@ impl<'a> Deref for BufferLockGuard<'a> {
 ///
 /// You should have only a single instance of this in your program.
 #[derive(Debug)]
-pub struct MemoryLogger(Logger);
+pub struct MemoryLogger(pub Logger);
 
 
 impl MemoryLogger {
@@ -153,6 +153,29 @@ impl MemoryLogger {
 		);
 
 		Ok(logger)
+	}
+
+	/// Returns a new logger instance without installation
+	pub fn new(
+		level: Level,
+		#[cfg(feature = "target")]
+		target: Regex
+	) -> &'static Self {
+		let logger = Box::leak(
+			Box::new(
+				Self(
+					Logger {
+						level,
+
+						buffer: Mutex::new(String::new()),
+
+						#[cfg(feature = "target")]
+						target
+					}
+				)
+			)
+		);
+		return logger;
 	}
 
 
